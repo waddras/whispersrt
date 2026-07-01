@@ -14,7 +14,7 @@ print(f"[info] Output: {output_file}")
 print(f"[info] Loading model...")
 
 t0 = time.time()
-model = WhisperModel("medium", device="cpu", compute_type="int8")
+model = WhisperModel("large-v3-turbo", device="cpu", compute_type="int8")
 print(f"[info] Model loaded in {time.time() - t0:.1f}s")
 
 print(f"[info] Transcribing...")
