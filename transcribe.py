@@ -1,4 +1,5 @@
 import sys
+import time
 from faster_whisper import WhisperModel
 
 if len(sys.argv) < 2:
@@ -8,9 +9,23 @@ if len(sys.argv) < 2:
 input_file = sys.argv[1]
 output_file = sys.argv[2] if len(sys.argv) > 2 else input_file.rsplit(".", 1)[0] + ".srt"
 
+print(f"[info] Input: {input_file}")
+print(f"[info] Output: {output_file}")
+print(f"[info] Loading model...")
+
+t0 = time.time()
 model = WhisperModel("base", device="cpu", compute_type="int8")
+print(f"[info] Model loaded in {time.time() - t0:.1f}s")
+
+print(f"[info] Transcribing...")
+t1 = time.time()
 segments, info = model.transcribe(input_file)
 
+print(f"[info] Language: {info.language} (prob: {info.language_probability:.2f})")
+print(f"[info] Duration: {info.duration:.1f}s")
+print()
+
+count = 0
 with open(output_file, "w") as f:
     for i, segment in enumerate(segments, 1):
         start_h = int(segment.start // 3600)
@@ -25,5 +40,17 @@ with open(output_file, "w") as f:
         end_ts = f"{end_h:02d}:{end_m:02d}:{end_s:02d},{end_ms:03d}"
         line = str(i) + "\n" + start_ts + " --> " + end_ts + "\n" + segment.text.strip() + "\n\n"
         f.write(line)
+        count = i
+        pct = min(100, segment.end / info.duration * 100)
+        bar_len = 40
+        filled = int(bar_len * pct / 100)
+        bar = "#" * filled + "-" * (bar_len - filled)
+        sys.stdout.write(f"\r[{bar}] {pct:5.1f}% | {i} segments | {segment.end:.1f}s/{info.duration:.1f}s")
+        sys.stdout.flush()
 
-print(f"Done: {output_file}")
+elapsed = time.time() - t1
+print()
+print()
+print(f"[info] Done: {count} segments written")
+print(f"[info] Time: {elapsed:.1f}s ({info.duration / elapsed:.1f}x realtime)")
+print(f"[info] Saved: {output_file}")
