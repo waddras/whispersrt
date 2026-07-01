@@ -1,25 +1,29 @@
 import sys
 import time
+import argparse
 from faster_whisper import WhisperModel
 
-if len(sys.argv) < 2:
-    print("Usage: python3 transcribe.py input.mkv [output.srt]")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Transcribe audio/video to SRT")
+parser.add_argument("input", help="Input audio/video file")
+parser.add_argument("-o", "--output", help="Output SRT file (default: same as input with .srt)")
+parser.add_argument("-m", "--model", default="large-v3-turbo", choices=["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"], help="Model size (default: large-v3-turbo)")
+args = parser.parse_args()
 
-input_file = sys.argv[1]
-output_file = sys.argv[2] if len(sys.argv) > 2 else input_file.rsplit(".", 1)[0] + ".srt"
+input_file = args.input
+output_file = args.output if args.output else input_file.rsplit(".", 1)[0] + ".srt"
 
 print(f"[info] Input: {input_file}")
 print(f"[info] Output: {output_file}")
+print(f"[info] Model: {args.model}")
 print(f"[info] Loading model...")
 
 t0 = time.time()
-model = WhisperModel("large-v3-turbo", device="cpu", compute_type="int8")
+model = WhisperModel(args.model, device="cpu", compute_type="int8")
 print(f"[info] Model loaded in {time.time() - t0:.1f}s")
 
 print(f"[info] Transcribing...")
 t1 = time.time()
-segments, info = model.transcribe(input_file, vad_filter=True)
+segments, info = model.transcribe(input_file)
 
 print(f"[info] Language: {info.language} (prob: {info.language_probability:.2f})")
 print(f"[info] Duration: {info.duration:.1f}s")
