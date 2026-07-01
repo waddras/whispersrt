@@ -19,7 +19,7 @@ print(f"[info] Model loaded in {time.time() - t0:.1f}s")
 
 print(f"[info] Transcribing...")
 t1 = time.time()
-segments, info = model.transcribe(input_file)
+segments, info = model.transcribe(input_file, vad_filter=True)
 
 print(f"[info] Language: {info.language} (prob: {info.language_probability:.2f})")
 print(f"[info] Duration: {info.duration:.1f}s")
